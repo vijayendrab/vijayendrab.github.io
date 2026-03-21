@@ -1,0 +1,5 @@
+title: My Personal Site
+description: A place to showcase my Snake game.
+theme: jekyll-theme-cayman
+# Custom variable you can use in your index.md
+github_username: vijayendrab 
