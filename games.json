@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "title": "Tic-Tac-Toe",
+    "description": "A quick round against a computer that gets sharper at each level.",
+    "category": "Strategy · 1 player",
+    "path": "games/tic-tac-toe/",
+    "cover": "assets/tic-tac-toe-cover.svg",
+    "color": "#ffd45e"
+  }
+]

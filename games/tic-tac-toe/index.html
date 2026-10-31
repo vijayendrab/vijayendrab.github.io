@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#eef3df">
+    <meta name="description" content="Play Tic-Tac-Toe against the computer. Choose Easy, Medium, or Hard.">
+    <title>Tic-Tac-Toe · Vijayendra’s little arcade</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --plum: #32183d;
+        --plum-soft: #65546b;
+        --mint: #eef3df;
+        --paper: #fffdf5;
+        --coral: #fa6858;
+        --cyan: #4ccec4;
+        --blue: #4664ef;
+        --yellow: #ffd45e;
+        font-family: "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+        color: var(--plum);
+        background: var(--mint);
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--mint); }
+      button, select { font: inherit; }
+      a { color: inherit; }
+      button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+      .page { width: min(920px, calc(100% - 36px)); margin: 0 auto; }
+      .topbar { height: 76px; display: flex; align-items: center; justify-content: space-between; }
+      .back-link { display: inline-flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 700; text-decoration: none; }
+      .back-mark { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 50%; color: var(--paper); background: var(--plum); font-size: 14px; }
+      .top-note { color: var(--plum-soft); font-size: 12px; font-weight: 600; }
+      main { padding: 28px 0 58px; }
+      .game-shell { position: relative; display: grid; grid-template-columns: .9fr 1.1fr; min-height: 570px; overflow: hidden; border: 2px solid var(--plum); border-radius: 8px; background: var(--paper); box-shadow: 8px 8px 0 var(--plum); }
+      .game-info { position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 48px 40px 35px; border-right: 2px solid var(--plum); }
+      .game-info::after { content: ""; position: absolute; width: 210px; height: 210px; left: -105px; bottom: 76px; border: 1px dashed #32183d3b; border-radius: 50%; pointer-events: none; }
+      .eyebrow { display: flex; align-items: center; gap: 9px; margin: 0 0 17px; color: var(--blue); font-size: 11px; font-weight: 800; }
+      .light { width: 8px; height: 8px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 4px #fa685826; }
+      h1 { position: relative; z-index: 1; margin: 0; font-size: clamp(43px, 5.5vw, 65px); line-height: .9; letter-spacing: -.075em; font-weight: 900; }
+      h1 span { color: var(--blue); }
+      .intro { max-width: 250px; margin: 19px 0 0; color: var(--plum-soft); font-size: 14px; line-height: 1.6; }
+      .marks-key { display: grid; gap: 12px; margin-top: 35px; }
+      .mark-item { display: flex; align-items: center; gap: 10px; color: var(--plum-soft); font-size: 12px; font-weight: 600; }
+      .key-x,.key-o { width: 27px; height: 27px; display: grid; place-items: center; border: 1px solid #32183d2a; border-radius: 6px; font-size: 16px; font-weight: 900; }
+      .key-x { color: var(--coral); background: #fa68581b; }
+      .key-o { color: var(--blue); background: #4664ef16; }
+      .side-caption { color: #95899a; font-size: 10px; }
+      .play-area { padding: 32px clamp(22px, 4vw, 48px) 34px; }
+      .controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 21px; }
+      .level-control { display: flex; align-items: center; gap: 9px; }
+      .level-control label { color: var(--plum-soft); font-size: 11px; font-weight: 700; }
+      select { max-width: 130px; padding: 9px 30px 9px 12px; border: 1px solid #32183d40; border-radius: 4px; color: var(--plum); background: var(--paper); font-size: 12px; font-weight: 700; }
+      .new-game { padding: 10px 14px; border: 2px solid var(--plum); border-radius: 4px; color: var(--paper); background: var(--plum); font-size: 12px; font-weight: 700; cursor: pointer; transition: background-color .16s ease, transform .16s ease; }
+      .new-game:hover { background: var(--blue); transform: translateY(-1px); }
+      .turn-display { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 9px; margin-bottom: 14px; border: 1px dashed #32183d42; border-radius: 4px; color: var(--plum); font-size: 13px; font-weight: 700; text-align: center; }
+      .turn-display[data-state="win"] { border-color: var(--coral); background: #fa685812; }
+      .turn-display[data-state="loss"] { border-color: var(--blue); background: #4664ef12; }
+      .turn-display[data-state="draw"] { border-color: #32183d42; background: #32183d08; }
+      .turn-symbol { color: var(--coral); font-size: 18px; }
+      .board { width: min(100%, 378px); aspect-ratio: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 auto; padding: 10px; border-radius: 6px; background: var(--plum); }
+      .cell { display: grid; place-items: center; min-width: 0; padding: 0; border: 0; border-radius: 3px; color: var(--plum); background: var(--mint); font-size: clamp(48px, 8vw, 78px); font-weight: 900; line-height: 1; cursor: pointer; transition: background-color .15s ease, transform .15s ease; }
+      .cell:hover:empty { background: var(--yellow); transform: scale(.98); }
+      .cell:disabled { cursor: default; }
+      .cell[data-mark="X"] { color: var(--coral); }
+      .cell[data-mark="O"] { color: var(--blue); }
+      .cell.winning { background: var(--yellow); }
+      .score-row { width: min(100%, 378px); display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 16px auto 0; }
+      .score { padding: 9px 6px 8px; border: 1px solid #32183d2a; border-radius: 4px; text-align: center; }
+      .score strong { display: block; font-size: 18px; line-height: 1; }
+      .score span { display: block; margin-top: 5px; color: var(--plum-soft); font-size: 10px; font-weight: 600; }
+      .score.player strong { color: var(--coral); }.score.computer strong { color: var(--blue); }
+      .reset-scores { display: block; margin: 12px auto 0; padding: 4px; border: 0; color: var(--plum-soft); background: transparent; font-size: 10px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+      .keyboard-hint { margin: 15px 0 0; color: #95899a; font-size: 10px; text-align: center; }
+      .site-footer { display: flex; justify-content: space-between; padding: 23px 3px 0; color: var(--plum-soft); font-size: 11px; }
+      .site-footer a { color: var(--plum); font-weight: 700; text-decoration: none; }
+      @media (max-width: 700px) {
+        .page { width: min(520px, calc(100% - 28px)); }
+        main { padding-top: 18px; }
+        .game-shell { grid-template-columns: 1fr; }
+        .game-info { padding: 30px 25px 23px; border-right: 0; border-bottom: 2px solid var(--plum); }
+        .game-info::after { left: auto; right: -100px; bottom: -118px; }
+        h1 { font-size: clamp(47px, 12vw, 62px); }
+        .intro { max-width: 410px; margin-top: 12px; }
+        .marks-key { display: flex; margin-top: 20px; gap: 20px; }
+        .side-caption { display: none; }
+        .play-area { padding: 24px 18px 28px; }
+        .board { width: min(100%, 350px); gap: 8px; padding: 8px; }
+      }
+      @media (max-width: 390px) {
+        .top-note { font-size: 10px; }
+        .controls { align-items: flex-start; flex-direction: column; }
+        .new-game { align-self: stretch; }
+        .play-area { padding-inline: 14px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,*::before,*::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <a class="back-link" href="../../"><span class="back-mark" aria-hidden="true">V</span> Back to the arcade</a>
+        <span class="top-note">A tiny game for a tiny break</span>
+      </header>
+
+      <main>
+        <section class="game-shell" aria-label="Tic-Tac-Toe game">
+          <div class="game-info">
+            <div>
+              <p class="eyebrow"><span class="light" aria-hidden="true"></span> TWO MARKS. NINE SQUARES.</p>
+              <h1>Tic-Tac-<br><span>Toe.</span></h1>
+              <p class="intro">You’re X. The computer’s O. Get three in a row and claim the bragging rights.</p>
+              <div class="marks-key" aria-label="Player marks">
+                <span class="mark-item"><span class="key-x" aria-hidden="true">×</span> You play X</span>
+                <span class="mark-item"><span class="key-o" aria-hidden="true">○</span> Computer plays O</span>
+              </div>
+            </div>
+            <span class="side-caption">No quarters required. Just one more round.</span>
+          </div>
+
+          <div class="play-area">
+            <div class="controls">
+              <div class="level-control">
+                <label for="level">Computer level</label>
+                <select id="level" name="level">
+                  <option value="easy">Easy</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+              <button class="new-game" id="new-game" type="button">New game</button>
+            </div>
+
+            <p class="turn-display" id="turn-display" data-state="playing" aria-live="polite" aria-atomic="true">
+              <span class="turn-symbol" aria-hidden="true">×</span><span id="message">Your turn. Pick a square.</span>
+            </p>
+
+            <div class="board" id="board" role="group" aria-label="Tic-Tac-Toe board">
+              <button class="cell" type="button" data-index="0" aria-label="Top left, empty"></button>
+              <button class="cell" type="button" data-index="1" aria-label="Top middle, empty"></button>
+              <button class="cell" type="button" data-index="2" aria-label="Top right, empty"></button>
+              <button class="cell" type="button" data-index="3" aria-label="Middle left, empty"></button>
+              <button class="cell" type="button" data-index="4" aria-label="Center, empty"></button>
+              <button class="cell" type="button" data-index="5" aria-label="Middle right, empty"></button>
+              <button class="cell" type="button" data-index="6" aria-label="Bottom left, empty"></button>
+              <button class="cell" type="button" data-index="7" aria-label="Bottom middle, empty"></button>
+              <button class="cell" type="button" data-index="8" aria-label="Bottom right, empty"></button>
+            </div>
+
+            <div class="score-row" aria-label="Session score">
+              <div class="score player"><strong id="wins">0</strong><span>You</span></div>
+              <div class="score"><strong id="draws">0</strong><span>Draws</span></div>
+              <div class="score computer"><strong id="losses">0</strong><span>Computer</span></div>
+            </div>
+            <button class="reset-scores" id="reset-scores" type="button">Reset score</button>
+            <p class="keyboard-hint">Tip: use Tab to reach a square, then press Enter or Space.</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer"><span>Made for the love of little games.</span><a href="../../">More games <span aria-hidden="true">↗</span></a></footer>
+    </div>
+
+    <script>
+      (() => {
+        const WIN_LINES = [
+          [0, 1, 2], [3, 4, 5], [6, 7, 8],
+          [0, 3, 6], [1, 4, 7], [2, 5, 8],
+          [0, 4, 8], [2, 4, 6]
+        ];
+        const cells = [...document.querySelectorAll(".cell")];
+        const levelSelect = document.querySelector("#level");
+        const message = document.querySelector("#message");
+        const turnDisplay = document.querySelector("#turn-display");
+        const score = { wins: 0, draws: 0, losses: 0 };
+        let board = Array(9).fill("");
+        let gameOver = false;
+        let computerThinking = false;
+        let computerTimer;
+
+        function winningLine(state, mark) {
+          return WIN_LINES.find(line => line.every(index => state[index] === mark));
+        }
+
+        function freeSquares(state) {
+          return state.map((mark, index) => mark ? -1 : index).filter(index => index !== -1);
+        }
+
+        function updateBoard() {
+          cells.forEach((cell, index) => {
+            const mark = board[index];
+            cell.textContent = mark === "X" ? "×" : mark === "O" ? "○" : "";
+            cell.dataset.mark = mark;
+            cell.classList.remove("winning");
+            const position = ["Top left", "Top middle", "Top right", "Middle left", "Center", "Middle right", "Bottom left", "Bottom middle", "Bottom right"][index];
+            cell.setAttribute("aria-label", `${position}, ${mark ? mark === "X" ? "X, your mark" : "O, computer’s mark" : "empty"}`);
+            cell.disabled = Boolean(mark) || gameOver || computerThinking;
+          });
+        }
+
+        function setMessage(text, state = "playing", symbol = "") {
+          message.textContent = text;
+          turnDisplay.dataset.state = state;
+          turnDisplay.querySelector(".turn-symbol").textContent = symbol;
+        }
+
+        function updateScore() {
+          document.querySelector("#wins").textContent = score.wins;
+          document.querySelector("#draws").textContent = score.draws;
+          document.querySelector("#losses").textContent = score.losses;
+        }
+
+        function finishRound(result, line) {
+          gameOver = true;
+          if (result === "X") {
+            score.wins += 1;
+            setMessage("You got three in a row. Nice one!", "win", "×");
+          } else if (result === "O") {
+            score.losses += 1;
+            setMessage("The computer takes this round.", "loss", "○");
+          } else {
+            score.draws += 1;
+            setMessage("A draw. Fancy a rematch?", "draw", "✳");
+          }
+          updateScore();
+          updateBoard();
+          if (line) line.forEach(index => cells[index].classList.add("winning"));
+        }
+
+        function checkRound() {
+          const xLine = winningLine(board, "X");
+          const oLine = winningLine(board, "O");
+          if (xLine) { finishRound("X", xLine); return true; }
+          if (oLine) { finishRound("O", oLine); return true; }
+          if (freeSquares(board).length === 0) { finishRound("draw"); return true; }
+          return false;
+        }
+
+        function randomChoice(options) {
+          return options[Math.floor(Math.random() * options.length)];
+        }
+
+        function findImmediateMove(mark) {
+          for (const index of freeSquares(board)) {
+            board[index] = mark;
+            const wins = Boolean(winningLine(board, mark));
+            board[index] = "";
+            if (wins) return index;
+          }
+          return null;
+        }
+
+        function chooseEasyMove() {
+          return randomChoice(freeSquares(board));
+        }
+
+        function chooseMediumMove() {
+          const win = findImmediateMove("O");
+          if (win !== null) return win;
+          const block = findImmediateMove("X");
+          if (block !== null) return block;
+          if (board[4] === "") return 4;
+          const corners = [0, 2, 6, 8].filter(index => board[index] === "");
+          if (corners.length) return randomChoice(corners);
+          return chooseEasyMove();
+        }
+
+        function minimax(state, isComputerTurn, depth) {
+          const computerWin = winningLine(state, "O");
+          const playerWin = winningLine(state, "X");
+          if (computerWin) return { score: 10 - depth };
+          if (playerWin) return { score: depth - 10 };
+          const available = freeSquares(state);
+          if (available.length === 0) return { score: 0 };
+
+          let best = { score: isComputerTurn ? -Infinity : Infinity, index: available[0] };
+          for (const index of available) {
+            state[index] = isComputerTurn ? "O" : "X";
+            const result = minimax(state, !isComputerTurn, depth + 1);
+            state[index] = "";
+            if (isComputerTurn ? result.score > best.score : result.score < best.score) {
+              best = { score: result.score, index };
+            }
+          }
+          return best;
+        }
+
+        function chooseHardMove() {
+          const options = freeSquares(board).map(index => {
+            board[index] = "O";
+            const result = minimax(board, false, 0);
+            board[index] = "";
+            return { index, score: result.score };
+          });
+          const bestScore = Math.max(...options.map(option => option.score));
+          return randomChoice(options.filter(option => option.score === bestScore)).index;
+        }
+
+        function computerMove() {
+          if (gameOver) return;
+          const level = levelSelect.value;
+          const move = level === "easy" ? chooseEasyMove() : level === "hard" ? chooseHardMove() : chooseMediumMove();
+          if (move === undefined) return;
+          board[move] = "O";
+          computerThinking = false;
+          updateBoard();
+          if (!checkRound()) setMessage("Your turn. Pick a square.", "playing", "×");
+        }
+
+        function playHumanMove(index) {
+          if (gameOver || computerThinking || board[index]) return;
+          board[index] = "X";
+          updateBoard();
+          if (checkRound()) return;
+          computerThinking = true;
+          setMessage("Computer’s turn…", "playing", "○");
+          updateBoard();
+          computerTimer = window.setTimeout(computerMove, 320);
+        }
+
+        function newGame(messageText = "Your turn. Pick a square.") {
+          window.clearTimeout(computerTimer);
+          board = Array(9).fill("");
+          gameOver = false;
+          computerThinking = false;
+          updateBoard();
+          setMessage(messageText, "playing", "×");
+        }
+
+        cells.forEach(cell => cell.addEventListener("click", () => playHumanMove(Number(cell.dataset.index))));
+        document.querySelector("#new-game").addEventListener("click", () => newGame());
+        levelSelect.addEventListener("change", () => newGame(`Level set to ${levelSelect.options[levelSelect.selectedIndex].text}. Your turn.`));
+        document.querySelector("#reset-scores").addEventListener("click", () => {
+          score.wins = 0;
+          score.draws = 0;
+          score.losses = 0;
+          updateScore();
+          newGame("Score reset. Your turn.");
+        });
+
+        updateBoard();
+      })();
+    </script>
+  </body>
+</html>
