@@ -31,4 +31,4 @@ A static personal game gallery for GitHub Pages. Each game lives in `/games`; th
 
 ## GitHub Pages
 
-The workflow in `.github/workflows/pages.yml` deploys the static site whenever `main` changes. In the repository’s **Settings → Pages**, set the build and deployment source to **GitHub Actions**. Because this repository is named `vijayendrab` rather than `vijayendrab.github.io`, its project-site address will be `https://vijayendrab.github.io/vijayendrab/` once Pages is enabled and the workflow succeeds. GitHub requires a repository named `<owner>.github.io` for a user site at the domain root.
+The workflow in `.github/workflows/pages.yml` deploys the static site whenever `main` changes. This repository is named `vijayendrab.github.io`, so its user-site address is `https://vijayendrab.github.io/`. GitHub Pages is configured to publish through GitHub Actions.
