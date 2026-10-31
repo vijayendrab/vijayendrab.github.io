@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#eef3df">
+    <meta name="description" content="A personal arcade of small, single-page games by Vijayendra.">
+    <title>Vijayendra’s little arcade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Monoton&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="games.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#games">Skip to the games</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="#top" aria-label="Vijayendra’s arcade home">
+        <span class="wordmark-mark" aria-hidden="true">V</span>
+        <span>Vijayendra’s<br>little arcade</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#games">Games <span id="nav-game-count">0</span></a>
+        <a class="github-link" href="https://github.com/vijayendrab" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="hero-kicker"><span class="status-light" aria-hidden="true"></span> A small corner of the internet</p>
+          <h1 id="hero-title">Hi, I’m<br><span>Vijayendra.</span></h1>
+          <p class="hero-description">I make little games for the web. This is my growing collection of tiny worlds, quick challenges, and happy accidents.</p>
+          <a class="start-button" href="#games">
+            <span class="start-icon" aria-hidden="true"><span></span></span>
+            <span>Find a game to play</span>
+          </a>
+        </div>
+        <div class="hero-art" aria-label="Illustration of an arcade joystick and colorful game buttons" role="img">
+          <div class="arcade-sun"></div>
+          <span class="spark spark-one">✳</span><span class="spark spark-two">✦</span><span class="spark spark-three">✳</span>
+          <div class="joystick-base"><div class="joystick-ball"></div><div class="joystick-stick"></div><div class="joystick-well"></div></div>
+          <div class="button-row"><span class="game-button button-coral"></span><span class="game-button button-cyan"></span><span class="game-button button-yellow"></span></div>
+          <p class="art-caption">insert a little curiosity</p>
+        </div>
+        <div class="hero-edge" aria-hidden="true"><span>Made one game at a time</span><span>✳</span><span>Best played for fun</span></div>
+      </section>
+
+      <section class="games-section" id="games" aria-labelledby="games-title">
+        <div class="wrap games-wrap">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">The game shelf</p>
+              <h2 id="games-title">Pick your next<br class="mobile-break"> little adventure<span class="heading-star" aria-hidden="true">✳</span></h2>
+            </div>
+            <p class="game-count"><span id="game-count">0</span><br><small>games and counting</small></p>
+          </div>
+          <div id="game-grid" class="game-grid" aria-live="polite"></div>
+          <div id="empty-state" class="empty-state" hidden>
+            <div class="empty-sticker" aria-hidden="true"><span>YOUR<br>GAME<br>HERE</span><i>✳</i></div>
+            <div>
+              <h3>Room for the first one.</h3>
+              <p>The arcade is warming up. Add a game to <code>/games</code>, then list it in <code>games.json</code> and it’ll show up here.</p>
+              <a href="https://github.com/vijayendrab/vijayendrab/tree/main" target="_blank" rel="noreferrer">Open the project on GitHub <span aria-hidden="true">↗</span></a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer wrap">
+      <a class="footer-mark" href="#top">V<span>✳</span></a>
+      <p>Made with curiosity by <a href="https://github.com/vijayendrab" target="_blank" rel="noreferrer">Vijayendra</a></p>
+      <a class="back-top" href="#top">Back to top ↑</a>
+    </footer>
+
+    <dialog class="game-dialog" id="game-dialog" aria-labelledby="dialog-title">
+      <form method="dialog"><button class="dialog-close" aria-label="Close game details">×</button></form>
+      <div class="dialog-art" id="dialog-art"></div>
+      <div class="dialog-copy">
+        <p class="dialog-category" id="dialog-category"></p>
+        <h2 id="dialog-title"></h2>
+        <p id="dialog-description"></p>
+        <a id="dialog-play" class="play-button" href="#" target="_blank" rel="noreferrer">Play this game <span aria-hidden="true">↗</span></a>
+      </div>
+    </dialog>
+  </body>
+</html>
