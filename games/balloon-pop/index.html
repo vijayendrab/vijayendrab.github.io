@@ -364,6 +364,7 @@
           ctx.save();
           ctx.translate(0, -43);
           ctx.rotate((angle - 90) * Math.PI / 180);
+          ctx.scale(.78, .78);
           ctx.strokeStyle = "#fa6858"; ctx.lineWidth = 4; ctx.lineCap = "round";
           ctx.beginPath(); ctx.moveTo(-3, -15); ctx.quadraticCurveTo(25, -3, -3, 16); ctx.stroke();
           ctx.strokeStyle = "#32183d"; ctx.lineWidth = 1.5;
@@ -554,7 +555,7 @@
           const move = (held.has("right") ? 1 : 0) - (held.has("left") ? 1 : 0);
           if (mode === "pivot") {
             if (move) {
-              aimAngle = Math.max(0, Math.min(180, aimAngle + move * 105 * dt));
+              aimAngle = Math.max(0, Math.min(180, aimAngle + move * 180 * dt));
               aimAngle = Math.round(aimAngle);
               aimReadout.textContent = `AIM ${aimAngle}°`;
             }
@@ -654,7 +655,7 @@
           if (targetIsControl) return;
           if (state === "playing" && mode === "pivot" && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
             event.preventDefault();
-            if (!event.repeat) { aimAngle = Math.max(0, Math.min(180, aimAngle + (event.key === "ArrowLeft" ? -5 : 5))); updateHud(); drawScene(performance.now()); }
+            if (!event.repeat) { aimAngle = Math.max(0, Math.min(180, aimAngle + (event.key === "ArrowLeft" ? -8 : 8))); updateHud(); drawScene(performance.now()); }
             return;
           }
           if (state === "playing" && (event.key === "ArrowLeft" || event.key === "a" || event.key === "A")) {
