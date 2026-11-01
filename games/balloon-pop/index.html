@@ -58,6 +58,12 @@
       .score-card strong { font-size: 21px; line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; }
       .score-card.best strong { color: var(--blue); }
       .score-state { margin-left: auto; color: var(--plum-soft); font-size: 11px; font-weight: 700; }
+      .mode-picker { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; }
+      .mode-picker span { margin-right: 4px; color: var(--plum-soft); font-size: 10px; font-weight: 900; }
+      .mode-button { padding: 7px 11px; border: 1px solid #32183d55; border-radius: 4px; color: var(--plum); background: transparent; font-size: 11px; font-weight: 800; cursor: pointer; }
+      .mode-button[aria-pressed="true"] { border-color: var(--plum); color: var(--paper); background: var(--plum); }
+      .mode-button:disabled { cursor: default; opacity: .55; }
+      .aim-readout { margin-left: auto; color: var(--blue); font-size: 11px; font-weight: 900; }
       .game-layout { display: grid; grid-template-columns: minmax(0,1fr) 205px; gap: 20px; align-items: start; }
       .scene-wrap { position: relative; width: 100%; overflow: hidden; border: 3px solid var(--plum); border-radius: 5px; background: #f8faef; box-shadow: 4px 4px 0 #32183d28; }
       canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; image-rendering: auto; }
@@ -135,6 +141,12 @@
           </header>
 
           <div class="game-body">
+            <div class="mode-picker" role="group" aria-label="Choose game version">
+              <span>VERSION</span>
+              <button class="mode-button" type="button" data-mode="classic" aria-pressed="true">Classic Bow</button>
+              <button class="mode-button" type="button" data-mode="pivot" aria-pressed="false">Pivot Bow</button>
+              <span class="aim-readout" id="aim-readout" hidden>AIM 90°</span>
+            </div>
             <div class="score-strip" aria-label="Scoreboard">
               <div class="score-card"><span>THIS RUN</span><strong id="score">00</strong></div>
               <div class="score-card best"><span>PERSONAL BEST</span><strong id="best-score">00</strong></div>
@@ -161,7 +173,7 @@
 
               <aside class="side-panel" aria-label="How to play">
                 <h2>How to play</h2>
-                <p>Move along the ground and aim underneath a balloon. One arrow can fly at a time. Miss even one balloon and the run is over.</p>
+                <p id="instructions">Move along the ground and aim underneath a balloon. One arrow can fly at a time. Miss even one balloon and the run is over.</p>
                 <ul class="key-list">
                   <li><kbd>←</kbd><kbd>→</kbd> Move</li>
                   <li><kbd>Enter</kbd> Shoot</li>
@@ -200,8 +212,14 @@
         const bestDisplay = document.querySelector("#best-score");
         const gameStatus = document.querySelector("#game-status");
         const announcer = document.querySelector("#announcer");
+        const modeButtons = [...document.querySelectorAll("[data-mode]")];
+        const aimReadout = document.querySelector("#aim-readout");
+        const instructions = document.querySelector("#instructions");
+        const touchButtons = [...document.querySelectorAll("[data-hold]")];
         const held = new Set();
         let archerX = WIDTH / 2;
+        let mode = "classic";
+        let aimAngle = 90;
         let balloons = [];
         let particles = [];
         let arrow = null;
@@ -214,12 +232,12 @@
         let raf = 0;
 
         function readBest() {
-          try { return Math.max(0, Number(localStorage.getItem(BEST_KEY)) || 0); }
+          try { return Math.max(0, Number(localStorage.getItem(`${BEST_KEY}-${mode}`)) || 0); }
           catch { return 0; }
         }
 
         function saveBest() {
-          try { localStorage.setItem(BEST_KEY, String(best)); }
+          try { localStorage.setItem(`${BEST_KEY}-${mode}`, String(best)); }
           catch { /* The current run still works if browser storage is unavailable. */ }
         }
 
@@ -231,6 +249,32 @@
         function updateHud() {
           scoreDisplay.textContent = String(score).padStart(2, "0");
           bestDisplay.textContent = String(best).padStart(2, "0");
+          aimReadout.textContent = `AIM ${aimAngle}°`;
+        }
+
+        function chooseMode(nextMode) {
+          if (state === "playing" || state === "paused") return;
+          mode = nextMode;
+          best = readBest();
+          aimAngle = 90;
+          modeButtons.forEach(button => {
+            button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
+            button.disabled = false;
+          });
+          const pivot = mode === "pivot";
+          aimReadout.hidden = !pivot;
+          instructions.textContent = pivot
+            ? "Your bow stays centered. Left and right rotate your aim from 0° (left) through 90° (up) to 180° (right). Shoot before a balloon reaches the ground."
+            : "Move along the ground and aim underneath a balloon. One arrow can fly at a time. Miss even one balloon and the run is over.";
+          touchButtons.forEach(button => {
+            button.setAttribute("aria-label", `${pivot ? "Aim" : "Move bow"} ${button.dataset.hold}`);
+            button.textContent = pivot ? (button.dataset.hold === "left" ? "↶" : "↷") : (button.dataset.hold === "left" ? "←" : "→");
+          });
+          setOverlay(pivot ? "Pick your angle." : "Ready, archer?", pivot
+            ? "Aim from 0° on the left to 180° on the right. 90° points straight up."
+            : "Balloons drift in on a steady timer. Their fall gets faster every five pops.", "Start game");
+          updateHud();
+          drawScene(performance.now());
         }
 
         function setOverlay(title, copy, buttonText, hidden = false) {
@@ -301,6 +345,7 @@
 
         function drawArcher() {
           const baseY = GROUND + 28;
+          const angle = mode === "pivot" ? aimAngle : 90;
           ctx.save();
           ctx.translate(archerX, baseY);
 
@@ -314,10 +359,16 @@
           ctx.fillStyle = "#32183d";
           ctx.beginPath(); ctx.arc(4, -47, 1.4, 0, Math.PI * 2); ctx.fill();
 
+          ctx.save();
+          ctx.translate(0, -43);
+          ctx.rotate((90 - angle) * Math.PI / 180);
           ctx.strokeStyle = "#fa6858"; ctx.lineWidth = 4; ctx.lineCap = "round";
-          ctx.beginPath(); ctx.moveTo(-3, -58); ctx.quadraticCurveTo(25, -46, -3, -27); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-3, -15); ctx.quadraticCurveTo(25, -3, -3, 16); ctx.stroke();
           ctx.strokeStyle = "#32183d"; ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.moveTo(-3, -58); ctx.lineTo(-3, -27); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-3, -15); ctx.lineTo(-3, 16); ctx.stroke();
+          ctx.strokeStyle = "#4664ef"; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -24); ctx.stroke();
+          ctx.restore();
 
           ctx.fillStyle = "#4ccec4";
           ctx.beginPath(); ctx.roundRect(-27, 0, 54, 8, 4); ctx.fill();
@@ -326,14 +377,18 @@
 
         function drawArrow() {
           if (!arrow) return;
+          ctx.save();
+          ctx.translate(arrow.x, arrow.y);
+          ctx.rotate(arrow.angle);
           ctx.strokeStyle = "#32183d";
           ctx.lineWidth = 4;
           ctx.lineCap = "round";
-          ctx.beginPath(); ctx.moveTo(arrow.x, arrow.y + 19); ctx.lineTo(arrow.x, arrow.y - 17); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, 19); ctx.lineTo(0, -17); ctx.stroke();
           ctx.fillStyle = "#fa6858";
-          ctx.beginPath(); ctx.moveTo(arrow.x, arrow.y - 25); ctx.lineTo(arrow.x - 7, arrow.y - 12); ctx.lineTo(arrow.x + 7, arrow.y - 12); ctx.closePath(); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(0, -25); ctx.lineTo(-7, -12); ctx.lineTo(7, -12); ctx.closePath(); ctx.fill();
           ctx.strokeStyle = "#4664ef"; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.moveTo(arrow.x, arrow.y + 13); ctx.lineTo(arrow.x - 7, arrow.y + 19); ctx.moveTo(arrow.x, arrow.y + 13); ctx.lineTo(arrow.x + 7, arrow.y + 19); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, 13); ctx.lineTo(-7, 19); ctx.moveTo(0, 13); ctx.lineTo(7, 19); ctx.stroke();
+          ctx.restore();
         }
 
         function drawParticles(dt) {
@@ -382,6 +437,7 @@
           nextSpawn = now + 350;
           nextShot = now;
           state = "playing";
+          modeButtons.forEach(button => { button.disabled = true; });
           pauseButton.disabled = false;
           pauseButton.textContent = "Pause";
           gameStatus.textContent = "Balloons incoming";
@@ -395,6 +451,7 @@
         function finishGame() {
           if (state !== "playing") return;
           state = "over";
+          modeButtons.forEach(button => { button.disabled = false; });
           held.clear();
           pauseButton.disabled = true;
           gameStatus.textContent = "Run complete";
@@ -430,13 +487,21 @@
 
         function shoot(now) {
           if (state !== "playing" || arrow || now < nextShot) return;
-          arrow = { x: archerX, y: GROUND - 68 };
+          const radians = (mode === "pivot" ? aimAngle : 90) * Math.PI / 180;
+          const direction = { x: -Math.cos(radians), y: -Math.sin(radians) };
+          arrow = { x: archerX + direction.x * 13, y: GROUND - 68 + direction.y * 13, vx: direction.x * ARROW_SPEED, vy: direction.y * ARROW_SPEED, angle: radians - Math.PI / 2 };
           nextShot = now + ARROW_COOLDOWN;
         }
 
         function update(dt, now) {
           const move = (held.has("right") ? 1 : 0) - (held.has("left") ? 1 : 0);
-          archerX = Math.max(34, Math.min(WIDTH - 34, archerX + move * PLAYER_SPEED * dt));
+          if (mode === "pivot") {
+            if (move) {
+              aimAngle = Math.max(0, Math.min(180, aimAngle + move * 105 * dt));
+              aimAngle = Math.round(aimAngle);
+              aimReadout.textContent = `AIM ${aimAngle}°`;
+            }
+          } else archerX = Math.max(34, Math.min(WIDTH - 34, archerX + move * PLAYER_SPEED * dt));
 
           if (now >= nextSpawn) {
             spawnBalloon();
@@ -463,14 +528,22 @@
           }
 
           if (arrow) {
-            arrow.y -= ARROW_SPEED * dt;
-            const hitIndex = balloons.findIndex(balloon => Math.abs(balloon.x - arrow.x) < balloon.radius + 3 && arrow.y - 25 < balloon.y + balloon.radius && arrow.y + 19 > balloon.y - balloon.radius);
+            const oldX = arrow.x, oldY = arrow.y;
+            arrow.x += arrow.vx * dt;
+            arrow.y += arrow.vy * dt;
+            const hitIndex = balloons.findIndex(balloon => {
+              const dx = arrow.x - oldX, dy = arrow.y - oldY;
+              const lengthSq = dx * dx + dy * dy;
+              const t = lengthSq ? Math.max(0, Math.min(1, ((balloon.x - oldX) * dx + (balloon.y - oldY) * dy) / lengthSq)) : 0;
+              const nearX = oldX + t * dx, nearY = oldY + t * dy;
+              return Math.hypot(balloon.x - nearX, balloon.y - nearY) < balloon.radius + 8;
+            });
             if (hitIndex !== -1) {
               const [popped] = balloons.splice(hitIndex, 1);
               makePop(popped);
               arrow = null;
               updateScore();
-            } else if (arrow.y < -28) {
+            } else if (arrow.y < -30 || arrow.y > HEIGHT + 30 || arrow.x < -30 || arrow.x > WIDTH + 30) {
               arrow = null;
             }
           }
@@ -522,6 +595,11 @@
             return;
           }
           if (targetIsControl) return;
+          if (state === "playing" && mode === "pivot" && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+            event.preventDefault();
+            if (!event.repeat) { aimAngle = Math.max(0, Math.min(180, aimAngle + (event.key === "ArrowLeft" ? -5 : 5))); updateHud(); drawScene(performance.now()); }
+            return;
+          }
           if (state === "playing" && (event.key === "ArrowLeft" || event.key === "a" || event.key === "A")) {
             event.preventDefault(); held.add("left");
           } else if (state === "playing" && (event.key === "ArrowRight" || event.key === "d" || event.key === "D")) {
@@ -563,6 +641,7 @@
           else startGame();
         });
         pauseButton.addEventListener("click", togglePause);
+        modeButtons.forEach(button => button.addEventListener("click", () => chooseMode(button.dataset.mode)));
 
         updateHud();
         drawScene(0);
