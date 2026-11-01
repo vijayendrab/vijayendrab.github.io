@@ -6,5 +6,13 @@
     "path": "games/tic-tac-toe/",
     "cover": "assets/tic-tac-toe-cover.svg",
     "color": "#ffd45e"
+  },
+  {
+    "title": "Snake",
+    "description": "Eat the food, grow longer, and try not to run into your tail.",
+    "category": "Arcade · 1 player",
+    "path": "games/snake/",
+    "cover": "assets/snake-cover.svg",
+    "color": "#4ccec4"
   }
 ]
