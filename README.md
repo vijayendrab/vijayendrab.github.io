@@ -2,7 +2,7 @@
 
 A static personal game gallery for GitHub Pages. Each game lives in `/games`; the homepage reads its title, short description, category, cover art, and launch path from `games.json`.
 
-The gallery currently includes Tic-Tac-Toe and Snake. Snake is single-player; a shared live board would need a realtime backend in addition to GitHub Pages.
+The gallery currently includes Tic-Tac-Toe, Snake, and Balloon Pop. Snake and Balloon Pop are single-player; shared live boards would need a realtime backend in addition to GitHub Pages.
 
 ## Add a game
 

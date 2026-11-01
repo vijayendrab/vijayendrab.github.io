@@ -14,5 +14,13 @@
     "path": "games/snake/",
     "cover": "assets/snake-cover.svg",
     "color": "#4ccec4"
+  },
+  {
+    "title": "Balloon Pop",
+    "description": "Move your bow, pop drifting balloons, and keep them off the ground.",
+    "category": "Arcade · Aim and shoot",
+    "path": "games/balloon-pop/",
+    "cover": "assets/balloon-pop-cover.svg",
+    "color": "#ffd45e"
   }
 ]

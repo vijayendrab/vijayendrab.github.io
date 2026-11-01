@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#eef3df">
+    <meta name="description" content="Move your archer and pop drifting balloons before they reach the ground.">
+    <title>Balloon Pop · Vijayendra’s little arcade</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --plum: #32183d;
+        --plum-soft: #65546b;
+        --mint: #eef3df;
+        --mint-dark: #dce7cd;
+        --paper: #fffdf5;
+        --coral: #fa6858;
+        --cyan: #4ccec4;
+        --blue: #4664ef;
+        --yellow: #ffd45e;
+        font-family: "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+        color: var(--plum);
+        background: var(--mint);
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--mint); }
+      button { font: inherit; }
+      a { color: inherit; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+      .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+      .page { width: min(1100px, calc(100% - 36px)); margin: 0 auto; }
+      .topbar { height: 76px; display: flex; align-items: center; justify-content: space-between; }
+      .back-link { display: inline-flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 700; text-decoration: none; }
+      .back-mark { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 50%; color: var(--paper); background: var(--plum); font-size: 14px; }
+      .top-note { color: var(--plum-soft); font-size: 12px; font-weight: 600; }
+      main { padding: 26px 0 48px; }
+      .game-shell { overflow: hidden; border: 2px solid var(--plum); border-radius: 8px; background: var(--paper); box-shadow: 8px 8px 0 var(--plum); }
+      .game-heading { display: flex; justify-content: space-between; align-items: end; gap: 25px; padding: 25px 36px 22px; border-bottom: 2px solid var(--plum); background: var(--yellow); }
+      .eyebrow { display: flex; align-items: center; gap: 9px; margin: 0 0 10px; color: var(--plum-soft); font-size: 11px; font-weight: 800; }
+      .status-light { width: 8px; height: 8px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 4px #fa685826; }
+      h1 { margin: 0; font: 900 clamp(45px, 6vw, 66px)/.88 "Avenir Next", Avenir, "Trebuchet MS", sans-serif; letter-spacing: -.08em; }
+      h1 span { color: var(--blue); }
+      .intro { max-width: 440px; margin: 11px 0 0; color: var(--plum-soft); font-size: 13px; line-height: 1.55; }
+      .heading-balloons { position: relative; width: 122px; height: 86px; flex: 0 0 auto; }
+      .heading-balloons i { position: absolute; bottom: 27px; width: 34px; height: 43px; border: 2px solid var(--plum); border-radius: 55% 55% 48% 48%; }
+      .heading-balloons i::before { content: ""; position: absolute; left: 11px; bottom: -6px; width: 9px; height: 9px; border: 2px solid var(--plum); border-top: 0; border-left: 0; background: inherit; transform: rotate(45deg); }
+      .heading-balloons i::after { content: ""; position: absolute; left: 16px; top: 46px; height: 25px; border-left: 1px solid var(--plum); transform: rotate(4deg); }
+      .heading-balloons i:nth-child(1) { left: 5px; height: 36px; background: var(--cyan); transform: rotate(-9deg); }
+      .heading-balloons i:nth-child(2) { left: 44px; bottom: 37px; height: 46px; background: var(--coral); }
+      .heading-balloons i:nth-child(3) { right: 5px; height: 38px; background: var(--blue); transform: rotate(8deg); }
+      .game-body { padding: 20px 28px 25px; }
+      .score-strip { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
+      .score-card { min-width: 132px; display: flex; align-items: center; justify-content: space-between; gap: 17px; padding: 9px 13px; border: 1px solid #32183d35; border-radius: 4px; background: var(--mint); }
+      .score-card.best { background: #4664ef12; }
+      .score-card span { color: var(--plum-soft); font-size: 10px; font-weight: 800; }
+      .score-card strong { font-size: 21px; line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; }
+      .score-card.best strong { color: var(--blue); }
+      .score-state { margin-left: auto; color: var(--plum-soft); font-size: 11px; font-weight: 700; }
+      .game-layout { display: grid; grid-template-columns: minmax(0,1fr) 205px; gap: 20px; align-items: start; }
+      .scene-wrap { position: relative; width: 100%; overflow: hidden; border: 3px solid var(--plum); border-radius: 5px; background: #f8faef; box-shadow: 4px 4px 0 #32183d28; }
+      canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; image-rendering: auto; }
+      .scene-overlay { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 11px; padding: 24px; background: #eef3dfee; text-align: center; }
+      .scene-overlay[hidden] { display: none; }
+      .overlay-sticker { width: 43px; height: 43px; display: grid; place-items: center; border: 2px solid var(--plum); border-radius: 50%; color: var(--plum); background: var(--coral); font-size: 22px; font-weight: 900; }
+      .scene-overlay h2 { margin: 0; font-size: clamp(23px, 3.7vw, 33px); line-height: 1; letter-spacing: -.06em; }
+      .scene-overlay p { max-width: 285px; margin: 0; color: var(--plum-soft); font-size: 12px; line-height: 1.5; }
+      .game-button { min-height: 43px; padding: 10px 15px; border: 2px solid var(--plum); border-radius: 4px; color: var(--paper); background: var(--plum); font-size: 12px; font-weight: 800; cursor: pointer; transition: background-color .15s ease, transform .15s ease; }
+      .game-button:hover:not(:disabled) { background: var(--blue); transform: translateY(-1px); }
+      .game-button:disabled { cursor: default; opacity: .58; }
+      .overlay-action { min-width: 136px; margin-top: 3px; }
+      .side-panel { padding: 16px 15px; border: 1px solid #32183d38; border-radius: 5px; background: var(--mint); }
+      .side-panel h2 { margin: 0 0 10px; font-size: 13px; font-weight: 900; }
+      .side-panel p { margin: 0; color: var(--plum-soft); font-size: 11px; line-height: 1.65; }
+      .key-list { display: grid; gap: 10px; margin: 14px 0 0; padding: 13px 0 0; border-top: 1px solid #32183d2d; list-style: none; }
+      .key-list li { display: flex; align-items: center; gap: 8px; color: var(--plum-soft); font-size: 10px; }
+      kbd { min-width: 23px; padding: 3px 5px; border: 1px solid #32183d42; border-radius: 3px; color: var(--plum); background: var(--paper); font-family: inherit; font-size: 10px; font-weight: 800; text-align: center; }
+      .pause-button { width: 100%; margin-top: 14px; color: var(--plum); background: transparent; }
+      .pause-button:hover:not(:disabled) { color: var(--paper); }
+      .touch-controls { display: none; }
+      .site-footer { display: flex; justify-content: space-between; gap: 14px; padding: 21px 3px 0; color: var(--plum-soft); font-size: 11px; }
+      .site-footer a { color: var(--plum); font-weight: 700; text-decoration: none; }
+      @media (max-width: 780px) {
+        .page { width: min(650px, calc(100% - 28px)); }
+        main { padding-top: 18px; }
+        .game-heading { padding: 22px 25px 20px; }
+        .game-body { padding: 17px 18px 20px; }
+        .game-layout { grid-template-columns: 1fr; gap: 13px; }
+        .side-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 20px; }
+        .side-panel h2 { grid-column: 1 / -1; }
+        .side-panel p { grid-column: 1; }
+        .key-list { grid-column: 2; grid-row: 2 / span 2; margin: 0; padding: 0 0 0 13px; border-top: 0; border-left: 1px solid #32183d2d; }
+        .pause-button { grid-column: 1 / -1; margin-top: 7px; }
+      }
+      @media (max-width: 520px) {
+        .topbar { height: 65px; }
+        .top-note { max-width: 100px; text-align: right; font-size: 10px; }
+        .heading-balloons { display: none; }
+        .game-heading { padding: 20px 18px 17px; }
+        .game-body { padding: 14px 12px 17px; }
+        .score-strip { gap: 7px; flex-wrap: wrap; }
+        .score-card { min-width: 119px; flex: 1; gap: 8px; padding: 8px 10px; }
+        .score-state { width: 100%; margin: 0; }
+        .scene-wrap { border-width: 2px; }
+        .side-panel { display: block; padding: 13px; }
+        .key-list { grid-template-columns: repeat(3,1fr); gap: 5px; margin-top: 10px; padding: 9px 0 0; border-top: 1px solid #32183d2d; border-left: 0; }
+        .key-list li { flex-wrap: wrap; gap: 4px; font-size: 9px; }
+        .key-list kbd { min-width: 20px; }
+        .touch-controls { display: grid; grid-template-columns: 1fr 1.35fr 1fr; gap: 9px; margin-top: 12px; touch-action: none; }
+        .touch-button { min-height: 54px; border: 1px solid #32183d50; border-radius: 7px; color: var(--plum); background: var(--yellow); font-size: 22px; font-weight: 900; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
+        .touch-button.shoot { border: 2px solid var(--plum); color: var(--paper); background: var(--coral); font-size: 13px; letter-spacing: .02em; }
+        .touch-button:active { background: var(--cyan); transform: scale(.97); }
+        .touch-button.shoot:active { color: var(--plum); }
+      }
+      @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <a class="back-link" href="../../"><span class="back-mark" aria-hidden="true">V</span> Back to the arcade</a>
+        <span class="top-note">Keep the sky clear</span>
+      </header>
+
+      <main>
+        <section class="game-shell" aria-labelledby="game-title">
+          <header class="game-heading">
+            <div>
+              <p class="eyebrow"><span class="status-light" aria-hidden="true"></span> ONE RUN. NO SECOND CHANCES.</p>
+              <h1 id="game-title">Balloon <span>Pop.</span></h1>
+              <p class="intro">Slide your bow, loose an arrow, and pop as many drifting balloons as you can before one reaches the ground.</p>
+            </div>
+            <div class="heading-balloons" aria-hidden="true"><i></i><i></i><i></i></div>
+          </header>
+
+          <div class="game-body">
+            <div class="score-strip" aria-label="Scoreboard">
+              <div class="score-card"><span>THIS RUN</span><strong id="score">00</strong></div>
+              <div class="score-card best"><span>PERSONAL BEST</span><strong id="best-score">00</strong></div>
+              <span class="score-state" id="game-status" aria-live="polite">Ready when you are</span>
+            </div>
+
+            <div class="game-layout">
+              <div>
+                <div class="scene-wrap">
+                  <canvas id="scene" width="800" height="600" role="img" aria-label="Balloon Pop playfield. Move your bow left or right and shoot the drifting balloons before they reach the ground."></canvas>
+                  <div class="scene-overlay" id="scene-overlay">
+                    <span class="overlay-sticker" aria-hidden="true">↟</span>
+                    <h2 id="overlay-title">Ready, archer?</h2>
+                    <p id="overlay-copy">Balloons drift in on a steady timer. Their fall gets faster every five pops.</p>
+                    <button class="game-button overlay-action" id="overlay-action" type="button">Start game</button>
+                  </div>
+                </div>
+                <div class="touch-controls" aria-label="Touch controls">
+                  <button class="touch-button" type="button" data-hold="left" aria-label="Move bow left">←</button>
+                  <button class="touch-button shoot" type="button" data-action="shoot" aria-label="Shoot an arrow">SHOOT ↑</button>
+                  <button class="touch-button" type="button" data-hold="right" aria-label="Move bow right">→</button>
+                </div>
+              </div>
+
+              <aside class="side-panel" aria-label="How to play">
+                <h2>How to play</h2>
+                <p>Move along the ground and aim underneath a balloon. One arrow can fly at a time. Miss even one balloon and the run is over.</p>
+                <ul class="key-list">
+                  <li><kbd>←</kbd><kbd>→</kbd> Move</li>
+                  <li><kbd>Enter</kbd> Shoot</li>
+                  <li><kbd>↑</kbd> Shoot</li>
+                </ul>
+                <button class="game-button pause-button" id="pause-button" type="button" disabled>Pause</button>
+              </aside>
+            </div>
+            <p class="visually-hidden" id="announcer" aria-live="polite" aria-atomic="true"></p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer"><span>Stay sharp. Keep your eyes up.</span><a href="../../">More games <span aria-hidden="true">↗</span></a></footer>
+    </div>
+
+    <script>
+      (() => {
+        const WIDTH = 800;
+        const HEIGHT = 600;
+        const GROUND = 535;
+        const SPAWN_INTERVAL = 2100;
+        const PLAYER_SPEED = 390;
+        const ARROW_SPEED = 650;
+        const ARROW_COOLDOWN = 280;
+        const BEST_KEY = "vijayendra-balloon-pop-best-v1";
+        const COLORS = ["#fa6858", "#4664ef", "#4ccec4", "#ffd45e"];
+        const canvas = document.querySelector("#scene");
+        const ctx = canvas.getContext("2d");
+        const overlay = document.querySelector("#scene-overlay");
+        const overlayTitle = document.querySelector("#overlay-title");
+        const overlayCopy = document.querySelector("#overlay-copy");
+        const overlayAction = document.querySelector("#overlay-action");
+        const pauseButton = document.querySelector("#pause-button");
+        const scoreDisplay = document.querySelector("#score");
+        const bestDisplay = document.querySelector("#best-score");
+        const gameStatus = document.querySelector("#game-status");
+        const announcer = document.querySelector("#announcer");
+        const held = new Set();
+        let archerX = WIDTH / 2;
+        let balloons = [];
+        let particles = [];
+        let arrow = null;
+        let score = 0;
+        let best = readBest();
+        let state = "ready";
+        let nextSpawn = 0;
+        let nextShot = 0;
+        let lastFrame = 0;
+        let raf = 0;
+
+        function readBest() {
+          try { return Math.max(0, Number(localStorage.getItem(BEST_KEY)) || 0); }
+          catch { return 0; }
+        }
+
+        function saveBest() {
+          try { localStorage.setItem(BEST_KEY, String(best)); }
+          catch { /* The current run still works if browser storage is unavailable. */ }
+        }
+
+        function announce(text) {
+          announcer.textContent = "";
+          window.setTimeout(() => { announcer.textContent = text; }, 20);
+        }
+
+        function updateHud() {
+          scoreDisplay.textContent = String(score).padStart(2, "0");
+          bestDisplay.textContent = String(best).padStart(2, "0");
+        }
+
+        function setOverlay(title, copy, buttonText, hidden = false) {
+          overlayTitle.textContent = title;
+          overlayCopy.textContent = copy;
+          overlayAction.textContent = buttonText;
+          overlay.hidden = hidden;
+        }
+
+        function currentFallSpeed() {
+          return Math.min(235, 66 + Math.floor(score / 5) * 9);
+        }
+
+        function spawnBalloon() {
+          const radius = 22 + Math.random() * 7;
+          const direction = Math.random() < .5 ? -1 : 1;
+          balloons.push({
+            x: radius + 18 + Math.random() * (WIDTH - (radius + 18) * 2),
+            y: -radius - 4,
+            radius,
+            speed: currentFallSpeed(),
+            drift: direction * (24 + Math.random() * 35),
+            color: COLORS[Math.floor(Math.random() * COLORS.length)],
+            wobble: Math.random() * Math.PI * 2,
+            stringPhase: Math.random() * Math.PI * 2
+          });
+        }
+
+        function drawCloud(x, y, scale) {
+          ctx.fillStyle = "#fffdf5b5";
+          ctx.beginPath();
+          ctx.ellipse(x, y, 45 * scale, 13 * scale, 0, 0, Math.PI * 2);
+          ctx.ellipse(x - 23 * scale, y - 7 * scale, 19 * scale, 16 * scale, 0, 0, Math.PI * 2);
+          ctx.ellipse(x + 4 * scale, y - 12 * scale, 24 * scale, 20 * scale, 0, 0, Math.PI * 2);
+          ctx.ellipse(x + 28 * scale, y - 4 * scale, 18 * scale, 15 * scale, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        function drawBalloon(balloon, time) {
+          const sway = Math.sin(time / 270 + balloon.wobble) * 3;
+          const x = balloon.x + sway;
+          const y = balloon.y;
+          const r = balloon.radius;
+
+          ctx.strokeStyle = "#32183d8a";
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(x, y + r - 1);
+          ctx.bezierCurveTo(x - 5, y + r + 12, x + 6, y + r + 21, x + Math.sin(time / 350 + balloon.stringPhase) * 5, y + r + 31);
+          ctx.stroke();
+
+          ctx.fillStyle = balloon.color;
+          ctx.beginPath();
+          ctx.ellipse(x, y, r * .78, r, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(x - 5, y + r - 2);
+          ctx.lineTo(x + 5, y + r - 2);
+          ctx.lineTo(x, y + r + 6);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = "#ffffff9c";
+          ctx.beginPath();
+          ctx.ellipse(x - r * .27, y - r * .22, r * .15, r * .24, -.45, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        function drawArcher() {
+          const baseY = GROUND + 28;
+          ctx.save();
+          ctx.translate(archerX, baseY);
+
+          // Small arcade archer with a bow aimed toward the sky.
+          ctx.fillStyle = "#32183d";
+          ctx.beginPath(); ctx.roundRect(-19, -37, 38, 38, 12); ctx.fill();
+          ctx.fillStyle = "#ffd45e";
+          ctx.beginPath(); ctx.arc(0, -45, 13, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = "#32183d"; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(0, -45, 13, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = "#32183d";
+          ctx.beginPath(); ctx.arc(4, -47, 1.4, 0, Math.PI * 2); ctx.fill();
+
+          ctx.strokeStyle = "#fa6858"; ctx.lineWidth = 4; ctx.lineCap = "round";
+          ctx.beginPath(); ctx.moveTo(-3, -58); ctx.quadraticCurveTo(25, -46, -3, -27); ctx.stroke();
+          ctx.strokeStyle = "#32183d"; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(-3, -58); ctx.lineTo(-3, -27); ctx.stroke();
+
+          ctx.fillStyle = "#4ccec4";
+          ctx.beginPath(); ctx.roundRect(-27, 0, 54, 8, 4); ctx.fill();
+          ctx.restore();
+        }
+
+        function drawArrow() {
+          if (!arrow) return;
+          ctx.strokeStyle = "#32183d";
+          ctx.lineWidth = 4;
+          ctx.lineCap = "round";
+          ctx.beginPath(); ctx.moveTo(arrow.x, arrow.y + 19); ctx.lineTo(arrow.x, arrow.y - 17); ctx.stroke();
+          ctx.fillStyle = "#fa6858";
+          ctx.beginPath(); ctx.moveTo(arrow.x, arrow.y - 25); ctx.lineTo(arrow.x - 7, arrow.y - 12); ctx.lineTo(arrow.x + 7, arrow.y - 12); ctx.closePath(); ctx.fill();
+          ctx.strokeStyle = "#4664ef"; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(arrow.x, arrow.y + 13); ctx.lineTo(arrow.x - 7, arrow.y + 19); ctx.moveTo(arrow.x, arrow.y + 13); ctx.lineTo(arrow.x + 7, arrow.y + 19); ctx.stroke();
+        }
+
+        function drawParticles(dt) {
+          particles = particles.filter(particle => particle.life > 0);
+          particles.forEach(particle => {
+            particle.x += particle.vx * dt;
+            particle.y += particle.vy * dt;
+            particle.vy += 85 * dt;
+            particle.life -= dt;
+            ctx.globalAlpha = Math.max(0, particle.life / .45);
+            ctx.fillStyle = particle.color;
+            ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2); ctx.fill();
+          });
+          ctx.globalAlpha = 1;
+        }
+
+        function drawScene(now, dt = 0) {
+          ctx.clearRect(0, 0, WIDTH, HEIGHT);
+          ctx.fillStyle = "#f8faef";
+          ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+          drawCloud(115, 112, .8);
+          drawCloud(690, 170, .62);
+          drawCloud(395, 68, .48);
+
+          ctx.fillStyle = "#dce7cd";
+          ctx.beginPath(); ctx.moveTo(0, GROUND - 14); ctx.quadraticCurveTo(210, GROUND - 37, 420, GROUND - 13); ctx.quadraticCurveTo(645, GROUND - 38, WIDTH, GROUND - 11); ctx.lineTo(WIDTH, HEIGHT); ctx.lineTo(0, HEIGHT); ctx.closePath(); ctx.fill();
+          ctx.strokeStyle = "#fa6858"; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.moveTo(0, GROUND); ctx.lineTo(WIDTH, GROUND); ctx.stroke();
+
+          balloons.forEach(balloon => drawBalloon(balloon, now));
+          drawParticles(dt);
+          drawArrow();
+          drawArcher();
+        }
+
+        function startGame() {
+          window.cancelAnimationFrame(raf);
+          score = 0;
+          archerX = WIDTH / 2;
+          balloons = [];
+          particles = [];
+          arrow = null;
+          held.clear();
+          const now = performance.now();
+          nextSpawn = now + 350;
+          nextShot = now;
+          state = "playing";
+          pauseButton.disabled = false;
+          pauseButton.textContent = "Pause";
+          gameStatus.textContent = "Balloons incoming";
+          setOverlay("Ready, archer?", "Balloons drift in on a steady timer. Their fall gets faster every five pops.", "Start game", true);
+          updateHud();
+          announce("Game started. Move left or right and shoot with Enter or the up arrow.");
+          lastFrame = now;
+          raf = window.requestAnimationFrame(frame);
+        }
+
+        function finishGame() {
+          if (state !== "playing") return;
+          state = "over";
+          held.clear();
+          pauseButton.disabled = true;
+          gameStatus.textContent = "Run complete";
+          setOverlay("One got through.", `You popped ${score} balloon${score === 1 ? "" : "s"}. Fancy another run?`, "Play again");
+          announce(`Game over. Your score is ${score}.`);
+        }
+
+        function updateScore() {
+          score += 1;
+          if (score > best) {
+            best = score;
+            saveBest();
+          }
+          updateHud();
+          if (score % 5 === 0) announce(`${score} pops. The balloons are moving faster now.`);
+          else announce(`Pop. Score ${score}.`);
+        }
+
+        function makePop(balloon) {
+          for (let i = 0; i < 12; i += 1) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 40 + Math.random() * 130;
+            particles.push({
+              x: balloon.x, y: balloon.y,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              radius: 2 + Math.random() * 3,
+              color: balloon.color,
+              life: .3 + Math.random() * .15
+            });
+          }
+        }
+
+        function shoot(now) {
+          if (state !== "playing" || arrow || now < nextShot) return;
+          arrow = { x: archerX, y: GROUND - 68 };
+          nextShot = now + ARROW_COOLDOWN;
+        }
+
+        function update(dt, now) {
+          const move = (held.has("right") ? 1 : 0) - (held.has("left") ? 1 : 0);
+          archerX = Math.max(34, Math.min(WIDTH - 34, archerX + move * PLAYER_SPEED * dt));
+
+          if (now >= nextSpawn) {
+            spawnBalloon();
+            nextSpawn = now + SPAWN_INTERVAL;
+          }
+
+          const speed = currentFallSpeed();
+          balloons.forEach(balloon => {
+            balloon.speed = speed;
+            balloon.y += balloon.speed * dt;
+            balloon.x += balloon.drift * dt;
+            if (balloon.x < balloon.radius + 4) {
+              balloon.x = balloon.radius + 4;
+              balloon.drift = Math.abs(balloon.drift);
+            } else if (balloon.x > WIDTH - balloon.radius - 4) {
+              balloon.x = WIDTH - balloon.radius - 4;
+              balloon.drift = -Math.abs(balloon.drift);
+            }
+          });
+
+          if (balloons.some(balloon => balloon.y + balloon.radius >= GROUND)) {
+            finishGame();
+            return;
+          }
+
+          if (arrow) {
+            arrow.y -= ARROW_SPEED * dt;
+            const hitIndex = balloons.findIndex(balloon => Math.abs(balloon.x - arrow.x) < balloon.radius + 3 && arrow.y - 25 < balloon.y + balloon.radius && arrow.y + 19 > balloon.y - balloon.radius);
+            if (hitIndex !== -1) {
+              const [popped] = balloons.splice(hitIndex, 1);
+              makePop(popped);
+              arrow = null;
+              updateScore();
+            } else if (arrow.y < -28) {
+              arrow = null;
+            }
+          }
+        }
+
+        function frame(now) {
+          if (state !== "playing") return;
+          const dt = Math.min(.04, Math.max(0, (now - lastFrame) / 1000));
+          lastFrame = now;
+          update(dt, now);
+          drawScene(now, dt);
+          if (state === "playing") raf = window.requestAnimationFrame(frame);
+        }
+
+        function togglePause() {
+          if (state === "playing") {
+            state = "paused";
+            window.cancelAnimationFrame(raf);
+            held.clear();
+            pauseButton.textContent = "Resume";
+            gameStatus.textContent = "Paused";
+            setOverlay("Catch your breath.", "Your balloons will wait right here.", "Resume");
+            drawScene(performance.now());
+          } else if (state === "paused") {
+            state = "playing";
+            pauseButton.textContent = "Pause";
+            gameStatus.textContent = "Balloons incoming";
+            setOverlay("Catch your breath.", "Your balloons will wait right here.", "Resume", true);
+            lastFrame = performance.now();
+            raf = window.requestAnimationFrame(frame);
+          }
+        }
+
+        function holdStart(key, event) {
+          event?.preventDefault();
+          if (state === "playing") held.add(key);
+        }
+
+        function holdEnd(key, event) {
+          event?.preventDefault();
+          held.delete(key);
+        }
+
+        document.addEventListener("keydown", event => {
+          const targetIsControl = event.target instanceof Element && Boolean(event.target.closest("button, a"));
+          if (event.key === "Escape" && (state === "playing" || state === "paused")) {
+            event.preventDefault();
+            togglePause();
+            return;
+          }
+          if (targetIsControl) return;
+          if (state === "playing" && (event.key === "ArrowLeft" || event.key === "a" || event.key === "A")) {
+            event.preventDefault(); held.add("left");
+          } else if (state === "playing" && (event.key === "ArrowRight" || event.key === "d" || event.key === "D")) {
+            event.preventDefault(); held.add("right");
+          } else if (state === "playing" && (event.key === "ArrowUp" || event.key === "Enter")) {
+            event.preventDefault();
+            if (!event.repeat) shoot(performance.now());
+          }
+        });
+
+        document.addEventListener("keyup", event => {
+          if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") held.delete("left");
+          if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") held.delete("right");
+        });
+        window.addEventListener("blur", () => held.clear());
+
+        document.querySelectorAll("[data-hold]").forEach(button => {
+          const key = button.dataset.hold;
+          button.addEventListener("pointerdown", event => {
+            holdStart(key, event);
+            button.setPointerCapture?.(event.pointerId);
+          });
+          button.addEventListener("pointerup", event => holdEnd(key, event));
+          button.addEventListener("pointercancel", event => holdEnd(key, event));
+          button.addEventListener("lostpointercapture", () => held.delete(key));
+          button.addEventListener("click", event => {
+            if (event.detail === 0 && state === "playing") {
+              held.add(key);
+              window.setTimeout(() => held.delete(key), 150);
+            }
+          });
+        });
+
+        const shootButton = document.querySelector('[data-action="shoot"]');
+        shootButton.addEventListener("pointerdown", event => { event.preventDefault(); shoot(performance.now()); });
+        shootButton.addEventListener("click", event => { if (event.detail === 0) shoot(performance.now()); });
+        overlayAction.addEventListener("click", () => {
+          if (state === "paused") togglePause();
+          else startGame();
+        });
+        pauseButton.addEventListener("click", togglePause);
+
+        updateHud();
+        drawScene(0);
+        raf = window.requestAnimationFrame(function idleDraw(now) {
+          if (state === "ready" || state === "over" || state === "paused") drawScene(now);
+          raf = window.requestAnimationFrame(idleDraw);
+        });
+      })();
+    </script>
+  </body>
+</html>
