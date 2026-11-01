@@ -175,7 +175,7 @@
                 <h2>How to play</h2>
                 <p id="instructions">Move along the ground and aim underneath a balloon. One arrow can fly at a time. Miss even one balloon and the run is over.</p>
                 <ul class="key-list">
-                  <li><kbd>←</kbd><kbd>→</kbd> Move</li>
+                  <li><kbd>←</kbd><kbd>→</kbd> <span id="direction-hint">Move</span></li>
                   <li><kbd>Enter</kbd> Shoot</li>
                   <li><kbd>↑</kbd> Shoot</li>
                 </ul>
@@ -215,6 +215,7 @@
         const modeButtons = [...document.querySelectorAll("[data-mode]")];
         const aimReadout = document.querySelector("#aim-readout");
         const instructions = document.querySelector("#instructions");
+        const directionHint = document.querySelector("#direction-hint");
         const touchButtons = [...document.querySelectorAll("[data-hold]")];
         const held = new Set();
         let archerX = WIDTH / 2;
@@ -266,6 +267,7 @@
           instructions.textContent = pivot
             ? "Your bow stays centered. Left and right rotate your aim from 0° (left) through 90° (up) to 180° (right). Shoot before a balloon reaches the ground."
             : "Move along the ground and aim underneath a balloon. One arrow can fly at a time. Miss even one balloon and the run is over.";
+          directionHint.textContent = pivot ? "Aim" : "Move";
           touchButtons.forEach(button => {
             button.setAttribute("aria-label", `${pivot ? "Aim" : "Move bow"} ${button.dataset.hold}`);
             button.textContent = pivot ? (button.dataset.hold === "left" ? "↶" : "↷") : (button.dataset.hold === "left" ? "←" : "→");
@@ -361,7 +363,7 @@
 
           ctx.save();
           ctx.translate(0, -43);
-          ctx.rotate((90 - angle) * Math.PI / 180);
+          ctx.rotate((angle - 90) * Math.PI / 180);
           ctx.strokeStyle = "#fa6858"; ctx.lineWidth = 4; ctx.lineCap = "round";
           ctx.beginPath(); ctx.moveTo(-3, -15); ctx.quadraticCurveTo(25, -3, -3, 16); ctx.stroke();
           ctx.strokeStyle = "#32183d"; ctx.lineWidth = 1.5;
@@ -372,6 +374,59 @@
 
           ctx.fillStyle = "#4ccec4";
           ctx.beginPath(); ctx.roundRect(-27, 0, 54, 8, 4); ctx.fill();
+          ctx.restore();
+        }
+
+        function drawAimScale() {
+          if (mode !== "pivot") return;
+          const cx = archerX;
+          const cy = GROUND - 15;
+          const radius = 118;
+          const radians = aimAngle * Math.PI / 180;
+          const dx = -Math.cos(radians);
+          const dy = -Math.sin(radians);
+
+          ctx.save();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = "#32183d66";
+          ctx.fillStyle = "#32183d99";
+          ctx.beginPath();
+          for (let degree = 0; degree <= 180; degree += 3) {
+            const theta = degree * Math.PI / 180;
+            const x = cx - radius * Math.cos(theta);
+            const y = cy - radius * Math.sin(theta);
+            if (degree === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+
+          [0, 45, 90, 135, 180].forEach(degree => {
+            const theta = degree * Math.PI / 180;
+            const ux = -Math.cos(theta), uy = -Math.sin(theta);
+            const inner = degree % 90 === 0 ? radius - 12 : radius - 7;
+            ctx.lineWidth = degree % 90 === 0 ? 2.5 : 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx + ux * inner, cy + uy * inner);
+            ctx.lineTo(cx + ux * (radius + 1), cy + uy * (radius + 1));
+            ctx.stroke();
+            ctx.font = "800 13px Avenir Next, Avenir, sans-serif";
+            ctx.textAlign = degree === 0 ? "left" : degree === 180 ? "right" : "center";
+            ctx.textBaseline = degree === 90 ? "bottom" : "middle";
+            ctx.fillText(`${degree}°`, cx + ux * (radius + 17), cy + uy * (radius + 17));
+          });
+
+          // The indicator uses the same vector as the launched arrow.
+          ctx.strokeStyle = "#fa6858";
+          ctx.lineWidth = 4;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + dx * (radius - 20), cy + dy * (radius - 20));
+          ctx.stroke();
+          ctx.fillStyle = "#fa6858";
+          ctx.beginPath();
+          ctx.arc(cx + dx * (radius - 20), cy + dy * (radius - 20), 5, 0, Math.PI * 2);
+          ctx.fill();
           ctx.restore();
         }
 
@@ -420,6 +475,7 @@
           ctx.beginPath(); ctx.moveTo(0, GROUND); ctx.lineTo(WIDTH, GROUND); ctx.stroke();
 
           balloons.forEach(balloon => drawBalloon(balloon, now));
+          drawAimScale();
           drawParticles(dt);
           drawArrow();
           drawArcher();
@@ -489,7 +545,8 @@
           if (state !== "playing" || arrow || now < nextShot) return;
           const radians = (mode === "pivot" ? aimAngle : 90) * Math.PI / 180;
           const direction = { x: -Math.cos(radians), y: -Math.sin(radians) };
-          arrow = { x: archerX + direction.x * 13, y: GROUND - 68 + direction.y * 13, vx: direction.x * ARROW_SPEED, vy: direction.y * ARROW_SPEED, angle: radians - Math.PI / 2 };
+          const originY = mode === "pivot" ? GROUND - 15 : GROUND - 68;
+          arrow = { x: archerX + direction.x * 13, y: originY + direction.y * 13, vx: direction.x * ARROW_SPEED, vy: direction.y * ARROW_SPEED, angle: radians - Math.PI / 2 };
           nextShot = now + ARROW_COOLDOWN;
         }
 
