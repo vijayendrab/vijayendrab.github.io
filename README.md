@@ -1,4 +1,4 @@
-# Vijayendra’s little arcade
+# VJ’s little arcade
 
 A static personal game gallery for GitHub Pages. Each game lives in `/games`; the homepage reads its title, short description, category, cover art, and launch path from `games.json`.
 
